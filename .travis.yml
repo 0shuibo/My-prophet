@@ -1,0 +1,88 @@
+dist: xenial
+language: java
+install: true
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - '$HOME/.sonar/cache'
+branches:
+  only:
+    - main
+    - dev
+
+env:
+  global:
+    - PROJECT="prophet"
+    - MODULE="prophet-starter"
+    - JAR_FILE="prophet-starter-1.0.0-SNAPSHOT.jar"
+    - PACKAGE_VERSION="${TRAVIS_BUILD_NUMBER}"
+    - DOCKER_NS="se-rem-test"
+    - ROLE="App"
+
+addons:
+  sonarcloud:
+    organization: "seds"
+    token: "${SONAR_TOKEN}"
+
+before_script:
+  - export ARTIFACT_NAME="${PROJECT}-${ROLE}-${TRAVIS_BRANCH}-${PACKAGE_VERSION}.zip"
+  - export TAG=`echo "$PROJECT-$ROLE:$TRAVIS_BRANCH-$PACKAGE_VERSION" | tr '[:upper:]' '[:lower:]'`
+  - export TAG_LATEST=`echo "$PROJECT-$ROLE:$TRAVIS_BRANCH-latest" | tr '[:upper:]' '[:lower:]'`
+  - export REMOTE_TAG=$DOCKER_REGISTRY/$DOCKER_NS/$TAG
+  - export REMOTE_TAG_LATEST=$DOCKER_REGISTRY/$DOCKER_NS/$TAG_LATEST
+script:
+  - mvn clean -B org.jacoco:jacoco-maven-plugin:prepare-agent install -Dmaven.test.skip=true
+
+before_deploy:
+#  - cd ${PROJECT}
+  - mkdir artifact
+  - mkdir target
+  - cp ${MODULE}/target/${JAR_FILE} target/
+  - 'curl -o upload.sh -H "Authorization: token ${GITHUB_TOKEN}" ${GITHUB_UPLOAD_SCRIPT}'
+  - cat ./upload.sh
+  - chmod a+x ./upload.sh
+  - cp ${MODULE}/target/${JAR_FILE} .
+  - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY
+  - docker build --build-arg JAR_FILE="${JAR_FILE}"
+    --build-arg TRAVIS_PROJECT="${PROJECT}"
+    --build-arg TRAVIS_BRANCH="${TRAVIS_BRANCH}"
+    --build-arg TRAVIS_VERSION="${PACKAGE_VERSION}"
+    --tag $TAG .
+  - IMAGEID=$(docker images $TAG -q)
+  - docker tag $IMAGEID $REMOTE_TAG_LATEST
+  - docker tag $IMAGEID $REMOTE_TAG
+  - docker save -o "artifact/${TAG}.tar" $TAG
+  - cp k8s.yaml artifact/
+  - echo -n "${PACKAGE_VERSION}" > artifact/version.txt
+
+  - cd artifact
+  - zip -r ../${ARTIFACT_NAME} ./
+  - docker image ls
+  - docker inspect $IMAGEID
+  - echo "ARTIFACT_NAME:${ARTIFACT_NAME}"
+  - echo "PROJECT:${PROJECT}"
+  - echo "TRAVIS_BRANCH:${TRAVIS_BRANCH}"
+  - echo "ROLE:${ROLE}"
+  - echo "PACKAGE_VERSION:${PACKAGE_VERSION}"
+  - echo "OSS_BUCKET:${OSS_BUCKET}"
+  - echo "OSS_KEY:${OSS_KEY}"
+  - echo "OSS_SECRET:${OSS_SECRET}"
+  - echo "PACKAGE_VERSION:${PACKAGE_VERSION}"
+  - echo "REMOTE_TAG:${REMOTE_TAG}"
+  - echo "REMOTE_TAG_LATEST:${REMOTE_TAG_LATEST}"
+  - cd ..
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    on:
+      all_branches: true
+    script:
+      >
+      docker push $REMOTE_TAG_LATEST &&
+      docker push $REMOTE_TAG &&
+      ./upload.sh ./${ARTIFACT_NAME} ${PROJECT} ${TRAVIS_BRANCH} ${ROLE} ${PACKAGE_VERSION} ${OSS_BUCKET} ${OSS_KEY} ${OSS_SECRET} &&
+      echo "docker deploy ok"

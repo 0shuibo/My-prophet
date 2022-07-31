@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: {{ project }}-{{ role }}
+  labels:
+    app: {{ project }}-{{ role }}
+spec: 
+  #replicas: ${prophet_SCALE}
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: {{ project }}-{{ role }}
+  strategy: 
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate 
+  template:
+    metadata:
+      labels:
+        app: {{ project }}-{{ role }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
+    spec:
+      containers:
+      - env:
+        - name: APOLLO_META
+          value: ${CFG_APOLLO_CONFIG_CENTER}
+        - name: APP_ID
+          value: {{ project }}
+        #image: docker.io/library/{{ project }}:latest
+        image: {{ image_name }}
+        imagePullPolicy: IfNotPresent
+        name: {{ project }}-{{ role }}
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 100m
+          limits:
+            memory: 2048Mi
+            cpu: 2000m
+        livenessProbe:
+          httpGet:
+            path: v1/healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: v1/healthy
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      imagePullSecrets:
+      - name: default-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ project }}
+  name: {{ project }}
+spec:
+  selector:
+    app: {{ project }}-{{ role }}
+  ports:
+    - name: "80"
+      port: 80
+      protocol: TCP
+      targetPort: 8080

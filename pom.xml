@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.0</version>
+    </parent>
+
+    <groupId>se.ds.ba.prophet</groupId>
+    <artifactId>prophet-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>prophet</name>
+
+    <properties>
+        <java.version>11</java.version>
+        <testcontainers.version>1.15.3</testcontainers.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <postgresql.version>42.2.23</postgresql.version>
+        <velocity.version>1.7</velocity.version>
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+        <swagger2.version>2.9.2</swagger2.version>
+        <fastjson.version>1.2.78</fastjson.version>
+        <liquibase.version>4.5.0</liquibase.version>
+        <mssql-jdbc.version>9.2.1.jre11</mssql-jdbc.version>
+        <lombok.version>1.18.20</lombok.version>
+        <log4j2.version>2.17.0</log4j2.version>
+        <hutool.version>5.7.13</hutool.version>
+        <apollo.version>1.4.0</apollo.version>
+    </properties>
+
+    <modules>
+        <module>prophet-common</module>
+        <module>prophet-app</module>
+        <module>prophet-starter</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 集成Apollo -->
+            <dependency>
+                <groupId>com.ctrip.framework.apollo</groupId>
+                <artifactId>apollo-client</artifactId>
+                <version>${apollo.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.9.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: prophet
+  jpa:
+    database-platform: "${prophet_DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}"
+    show-sql: "true"
+    format-sql: "true"
+    use-sql-comments: "true"
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  datasource:
+    # primary
+    driverClassName: "${prophet_DB_DRIVER:org.postgresql.Driver}"
+    #DataBase URL
+    url: "${prophet_DB_URL:jdbc:postgresql://172.26.196.242:5432/release_management}"
+    #DataBase username
+    username: "${prophet_DB_USERNAME:release_user}"
+    #DataBase password
+    password: "${prophet_DB_PASSWORD:P@ssw1rd}"
+    #filters: log4j,wall,mergeStat
+    hikari:
+      maximumPoolSize: "${prophet_DB_MAXIMUM_POOL_SIZE:20}"
+      minimumIdle: "${prophet_DB_MINIMUM_IDLE_SIZE:5}"
+      idleTimeout: 600000
+      connectionTimeout: 30000
+      maxLifetime: 1800000
+    type: com.zaxxer.hikari.HikariDataSource
